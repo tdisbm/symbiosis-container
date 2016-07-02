@@ -31,6 +31,15 @@ device.prototype =
             collection.addItem(device, data);
             $this._data.addItem(email, collection);
         });
+        
+        this.onDisconnect(function(socket){
+            email = socket.handshake.query.email;
+            device = socket.handshake.query.name;
+
+            try {
+                $this._data.getItem(email).removeItem(device);
+            } catch(e) {}
+        })
     },
     
     getByEmail : function(email) 

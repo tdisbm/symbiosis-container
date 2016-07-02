@@ -8,10 +8,6 @@
           {"name" : "type", "options" : ["required", "identifier"]},
           {"name" : "email", "options" : ["required"]},
           {"name" : "name", "options" : ["required"]}
-        ],
-        "mappers": [
-          {"class" : "tests/TestClass.js"},
-          {"class" : "tests/TestClass.js"}
         ]
       }
     },
@@ -23,9 +19,6 @@
         "parameters" : [
           {"name" : "type", "options" : ["identifier"]},
           {"name" : "email", "options" : ["required"]}
-        ],
-        "mappers": [
-          {"class" : "tests/TestClass.js"}
         ]
       }
     }
