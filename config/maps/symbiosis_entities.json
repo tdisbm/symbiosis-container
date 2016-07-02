@@ -1,0 +1,33 @@
+{
+  "nodes": [
+    {
+      "name" : "device",
+      "class" : "src/symbiosis-entities/device.js",
+      "handshake" : {
+        "parameters" : [
+          {"name" : "type", "options" : ["required", "identifier"]},
+          {"name" : "email", "options" : ["required"]},
+          {"name" : "name", "options" : ["required"]}
+        ],
+        "mappers": [
+          {"class" : "tests/TestClass.js"},
+          {"class" : "tests/TestClass.js"}
+        ]
+      }
+    },
+
+    {
+      "name" : "user",
+      "class" : "src/symbiosis-entities/user.js",
+      "handshake" : {
+        "parameters" : [
+          {"name" : "type", "options" : ["identifier"]},
+          {"name" : "email", "options" : ["required"]}
+        ],
+        "mappers": [
+          {"class" : "tests/TestClass.js"}
+        ]
+      }
+    }
+  ]
+}
