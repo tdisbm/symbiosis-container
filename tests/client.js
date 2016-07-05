@@ -49,4 +49,10 @@ socket.on("message", function(data){
     console.log(data);
 });
 
+if (argv.node == 'device') {
+   setInterval(function(){
+       socket.emit("message", {DHT22 : {"temperature" : "500", "humidity" : "8000"}})
+   }, 3000);
+}
+
 
