@@ -12,6 +12,14 @@ module.exports = function(argv) {
             headers['user-agent'],
             socket.handshake.query.email
         );
+
+        socket.on("disconnect", function() {
+            console.info('[-] DISCONNECTED: \n - Host: %s \n - User Agent: %s \n - Email: %s',
+                headers['host'],
+                headers['user-agent'],
+                socket.handshake.query.email
+            );
+        })
     });
     
     return io;

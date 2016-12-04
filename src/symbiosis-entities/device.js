@@ -23,7 +23,7 @@ device.prototype =
             
             email = query.email;
             device = query.name;
-            
+
             if (null === (collection = $this._data.getItem(email))) {
                 collection = new ObjectCollection();
             }
