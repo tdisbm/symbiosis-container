@@ -1,54 +1,49 @@
-var user = function()
-{
-    this._sender = {};
-    this._sendRate = 2000;
-    this._sendEvent = 'message';
-    
-    this._init();
-};
+'use strict';
 
+const Feedback = require('../../node_modules/symbiosis/lib/middleware/elements/Feedback');
+const util = require('util');
+const _ = require('lodash');
 
-user.prototype =
-{
-    _init : function()
-    {
-        var $this = this;
-        var email = null;
-        var deviceData = null;
+let streams = {};
 
-        this.onConnect(function(socket) {
-            email = socket.handshake.query.email;
+const events = {
+    stream_start : (socket, data, io) => {
+        const interval = _.get(data, 'interval', null);
+        const device_name = _.get(data, 'device_name', null);
+        const key = _.get(data, 'key', null);
 
-            $this._sender[email + socket.id] = setInterval(function() {
-                deviceData = $this.getNode('device').getByEmail(email);
-                var prepared = [];
+        if (interval && key) {
+            const device_data_source = _.get(io, 'symbiosis_device.sources.device_data');
+            let parameters = {};
 
-                if (deviceData) {
-                    for (var device in deviceData.items) {
-                        if (!deviceData.items.hasOwnProperty(device)) {
-                            continue;
-                        }
+            if (device_name) {
+                parameters.device_name = device_name;
+            }
 
-                        prepared.push({
-                            "name": device,
-                            "data": null,
-                            "devices": deviceData.items[device]
-                        })
-                    }
-
-                    if (prepared.length) {
-                        socket.emit($this._sendEvent, prepared);
-                    }
-                }
-            }, $this._sendRate);
-        }).onDisconnect(function(socket) {
-            email = socket.handshake.query.email;
-            
-            clearInterval($this._sender[email + socket.id]);
-            delete $this._sender[email + socket.id];
-        });
+            streams[socket.id][key] = setInterval(function() {
+                socket.emit('stream_data:' + key, device_data_source(socket, parameters));
+            }, interval);
+        }
+    },
+    stream_stop: (socket, data) => {
+        const key = _.get(data, 'key', null);
+        clearInterval(streams[socket.id][key]);
     }
 };
 
+const lifecycles = {
+    connect: (socket) => {
+        streams[socket.id] = {};
+    },
+    disconnect: (socket) => {
+        _.each(streams[socket.id], (stream) => {
+           clearInterval(stream);
+        });
+        delete streams[socket.id];
+    }
+};
 
-module.exports = user;
+module.exports = {
+    lifecycles: lifecycles,
+    events: events
+};

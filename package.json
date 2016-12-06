@@ -5,7 +5,7 @@
   "dependencies": {
     "express": "~4.13.1",
     "socket.io-client": "1.3.6",
-    "symbiosis": "git://github.com/tdisbm/symbiosis.git",
+    "symbiosis": "git://github.com/tdisbm/symbiosis.git#58fc4420bc25e43f734be833371acec8770e1eb3",
     "yargs": "~3.30.0"
   }
 }

@@ -1,8 +1,11 @@
 var io = require("socket.io-client");
 var argv = require('yargs').argv;
-var Map = require('../node_modules/symbiosis/lib/Kernel/Map/Map.js');
+var map = require('../node_modules/symbiosis/lib/map/Map.js');
 
-var map = new Map('../config/maps/symbiosis_entities.json');
+map.load([
+    '../config/maps/symbiosis_entities.json'
+]);
+
 var nodes = map.getElements().nodes;
 var node = null;
 
@@ -43,16 +46,34 @@ var socket = io.connect("http://" + host + ":" + port, {
     query : query.join('&')
 });
 
-socket.emit("hello");
+socket.emit("stream_start", {
+    interval: 3000,
+    key: "test"
+});
 
-socket.on("message", function(data){
+socket.on("stream_data:test", function(data){
+    if (data.status == 'success') {
+        console.log(data.data);
+    } else {
+        console.log(data.data.message);
+    }
+});
+
+socket.on("device_name_list:update", function(data) {
     console.log(data);
 });
 
+
 if (argv.node == 'device') {
-   setInterval(function(){
-       socket.emit("message", {DHT22 : {"temperature" : "500", "humidity" : "8000"}})
-   }, 3000);
+    setInterval(function(){
+        socket.emit("message", [{
+            "data" : {
+                "temperature" : "500",
+                "humidity" : "8000"
+            },
+            "name" : "DHT22"
+        }])
+    }, 3000);
 }
 
 

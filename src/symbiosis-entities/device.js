@@ -1,52 +1,117 @@
-var ObjectCollection = require('../../node_modules/symbiosis/lib/Kernel/Util/ObjectCollection');
+'use strict';
 
-var device = function()
-{
-    this._data = new ObjectCollection();
-    this._receiveEvent = 'message';
-    this._init();
-};
+const Feedback = require('../../node_modules/symbiosis/lib/middleware/elements/Feedback');
+const util = require('util');
+const _ = require('lodash');
 
+let devices = {};
+let devices_names = {};
 
-device.prototype = 
-{
-    _init : function()
-    {
-        var collection = null;
-        var device = null;
-        var query = null;
-        var email = null;
-        var $this = this;
-        
-        this.on($this._receiveEvent, function (socket, data) {
-            query = socket.handshake.query;
-            
-            email = query.email;
-            device = query.name;
+const sources = {
+    device_data : (socket, data) => {
+        const devices_data = _.get(devices, _.get(socket, 'handshake.query.email'), []);
+        const device_name = _.get(data, 'device_name', null);
 
-            if (null === (collection = $this._data.getItem(email))) {
-                collection = new ObjectCollection();
+        let response = new Feedback();
+
+        if (0 == devices_data.length) {
+            return response
+                .setStatus(Feedback.FEEDBACK_STATUS_FAILURE)
+                .setData({
+                    "message" : "No devices"
+                });
+        }
+
+        if (device_name) {
+            for (let i = 0; i < devices_data.length; i++) {
+                if (device_name == devices_data[i].name) {
+                    response.setData(devices_data[i].name);
+                }
             }
-            
-            collection.addItem(device, data);
-            $this._data.addItem(email, collection);
-        });
-        
-        this.onDisconnect(function(socket){
-            email = socket.handshake.query.email;
-            device = socket.handshake.query.name;
+        } else {
+            response.setData(devices_data);
+        }
 
-            try {
-                $this._data.getItem(email).removeItem(device);
-            } catch(e) {}
-        })
+        return response;
     },
-    
-    getByEmail : function(email) 
-    {
-        return this._data.getItem(email);
+    device_name_list : (socket) => {
+        const names = _.get(devices_names, _.get(socket, 'handshake.query.email', null), []);
+        let response = new Feedback();
+
+        if (!names) {
+            response.setStatus(Feedback.FEEDBACK_STATUS_FAILURE);
+        }
+
+        return response.setData(names);
     }
 };
 
+const events = {
+    device_data_push : (socket, data) => {
+        const device_name = _.get(socket, 'handshake.query.name', null);
+        const email = _.get(socket, 'handshake.query.email', null);
+        let device_data = _.get(devices, email, []);
 
-module.exports = device;
+        for (let i = 0; i < device_data.length; i++) {
+            if (device_data[i].name == device_name) {
+                device_data[i].devices = data;
+                break;
+            }
+        }
+    }
+};
+
+const lifecycles = {
+    connect: (socket, io) => {
+        const email = _.get(socket, 'handshake.query.email');
+        const name = _.get(socket, 'handshake.query.name');
+
+        let d = devices[email];
+        let dn = devices_names[email];
+
+        if (typeof d === 'undefined') {
+            d = devices[email] = [];
+        }
+
+        if (typeof dn === 'undefined') {
+            dn = devices_names[email] = [];
+        }
+
+        if (dn.indexOf(name) !== -1) {
+            socket.disconnect();
+            return;
+        }
+
+        dn.push(name);
+        d.push({
+            name: name,
+            data: null,
+            devices: []
+        });
+
+        io.to('symbiosis_user').emit(
+            'device_name_list:update',
+            sources.device_name_list(socket)
+        )
+    },
+    disconnect: (socket, io) => {
+        const email = _.get(socket, 'handshake.query.email');
+        const name = _.get(socket, 'handshake.query.name');
+
+        _.pull(_.get(devices_names, email, []), name);
+        _.remove(_.get(devices, email, []), {
+            name: name
+        });
+
+        io.to('symbiosis_user').emit(
+            'device_name_list:update',
+            sources.device_name_list(socket)
+        )
+    }
+};
+
+module.exports = {
+    lifecycles: lifecycles,
+    sources: sources,
+    events: events
+};

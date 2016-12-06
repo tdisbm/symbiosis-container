@@ -2,7 +2,9 @@
   "nodes": [
     {
       "name" : "device",
-      "class" : "src/symbiosis-entities/device.js",
+      "modules" : [
+        "src/symbiosis-entities/device.js"
+      ],
       "handshake" : {
         "parameters" : [
           {"name" : "type", "options" : ["required", "identifier"]},
@@ -14,7 +16,9 @@
 
     {
       "name" : "user",
-      "class" : "src/symbiosis-entities/user.js",
+      "modules" : [
+        "src/symbiosis-entities/user.js"
+      ],
       "handshake" : {
         "parameters" : [
           {"name" : "type", "options" : ["identifier"]},
