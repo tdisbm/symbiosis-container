@@ -1,3 +1,3 @@
-module.exports = function(app) {
-    require('./rest/config.js')(app);
+module.exports = (app) => {
+  require('./rest/config.js')(app);
 };

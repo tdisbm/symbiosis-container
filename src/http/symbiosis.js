@@ -1,26 +1,35 @@
-var symbiosis = require("symbiosis")("config/maps/symbiosis_entities.json");
+'use strict';
 
-module.exports = function(argv) {
-    const port = 9000/*process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || argv.port*/;
-    const io = symbiosis.io.listen(port);
-    
-    io.on('connect', function(socket) {
-        var headers = socket.handshake.headers;
-        
-        console.info('[+] NEW CONNECTION: \n - Host: %s \n - User Agent: %s \n - Email: %s',
-            headers['host'],
-            headers['user-agent'],
-            socket.handshake.query.email
-        );
+const symbiosis = require("symbiosis")("config/maps/symbiosis_entities.json");
+const _ = require('lodash');
 
-        socket.on("disconnect", function() {
-            console.info('[-] DISCONNECTED: \n - Host: %s \n - User Agent: %s \n - Email: %s',
-                headers['host'],
-                headers['user-agent'],
-                socket.handshake.query.email
-            );
-        })
+module.exports = (config) => {
+  const port = _.get(config, 'connection.container_port', null);
+  const console_connection_monitor = _.get(config, 'console_connection_monitor', false);
+  const io = symbiosis.io.listen(port);
+
+  const update_console = (io) => {
+    process.stdout.write('\x1Bc');
+    _.each(io.sockets.sockets, (socket) => {
+      const headers = socket.handshake.headers;
+
+      console.info('[+] CONNECTION: \n - Host: %s \n - User Agent: %s \n - Email: %s',
+        headers['host'],
+        headers['user-agent'],
+        _.get(socket, 'handshake.query.email', null)
+      );
     });
-    
-    return io;
+  };
+
+  io.on('connect', (socket) => {
+    if (console_connection_monitor) {
+      update_console(io);
+
+      socket.on("disconnect", () => {
+        update_console(io);
+      })
+    }
+  });
+
+  return symbiosis;
 };

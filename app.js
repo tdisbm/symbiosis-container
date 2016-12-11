@@ -1,6 +1,5 @@
-var app = require('express')();
-var argv = require('yargs').argv;
+'use strict';
 
-require('./src/http/loader.js')(app, argv);
-require('./src/routing/loader.js')(app);
+let config = require('./config/parameters.json');
+let http_bundle = require('./src/http/loader.js')(config);
 

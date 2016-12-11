@@ -1,8 +1,8 @@
-module.exports = function(app, argv) {
-    var symbiosis = require('./symbiosis.js')(argv);
-    
-    return {
-        "symbiosis" : symbiosis
-    }
+'use strict';
+
+module.exports = (config) => {
+  return {
+    "symbiosis" : require('./symbiosis.js')(config)
+  }
 };
     
